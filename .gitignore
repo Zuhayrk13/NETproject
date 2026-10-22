@@ -1,0 +1,73 @@
+# =========================================================
+# Employee Management System - .gitignore
+# Covers: .NET (C#), React (Node), Docker, IDEs, OS files
+# =========================================================
+
+# ---------- Secrets & environment files ----------
+# Real credentials live here; never commit them.
+# (.env.example IS committed so others know which variables to set)
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+appsettings.Local.json
+secrets.json
+*.pfx
+*.key
+
+# ---------- .NET / C# build output ----------
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ---------- Test results & coverage ----------
+[Tt]est[Rr]esult*/
+*.trx
+coverage/
+coverage*.json
+coverage*.xml
+*.coverage
+*.coveragexml
+
+# ---------- Node / React ----------
+node_modules/
+frontend/build/
+frontend/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
+
+# ---------- IDEs & editors ----------
+.vs/
+.idea/
+*.swp
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ---------- Docker ----------
+# Local database volume data (if ever bind-mounted)
+mssql-data/
+docker-compose.override.yml
+
+# ---------- OS files ----------
+.DS_Store
+Thumbs.db
+desktop.ini
