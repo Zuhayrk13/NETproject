@@ -1,27 +1,66 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using EmployeeManagement.Api.Data;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ---------- Half 1: register services ----------
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        // C# uses FirstName; the React app uses first_name. This converts between them
+        // automatically, in both directions.
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+
+        // Send/receive enums as text ("Active") instead of numbers (0).
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        // When validation fails, reply as { "error": "...", "errors": {...} }
+        // because the React app reads data.error.
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(entry => entry.Value!.Errors.Count > 0)
+                .ToDictionary(
+                    entry => entry.Key,
+                    entry => entry.Value!.Errors
+                        .Select(e => entry.Key.StartsWith('$') || string.IsNullOrEmpty(e.ErrorMessage)
+                            // "$.status" style keys come from JSON that couldn't be read at all
+                            // (e.g. status = "Maybe"); replace the technical message with a clear one.
+                            ? $"Invalid value for '{entry.Key.TrimStart('$', '.')}'."
+                            : e.ErrorMessage)
+                        .ToArray());
+
+            // Prefer the JSON-format error if there is one, otherwise the first rule that failed.
+            var firstError = errors
+                .OrderByDescending(entry => entry.Key.StartsWith('$'))
+                .First().Value.First();
+
+            return new BadRequestObjectResult(new { error = firstError, errors });
+        };
+    });
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 builder.Services.AddOpenApi();
+
+// ---------- Half 2: the request pipeline ----------
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
