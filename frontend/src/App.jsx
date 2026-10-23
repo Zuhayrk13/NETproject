@@ -15,6 +15,25 @@ async function readJson(response) {
   }
 }
 
+// Capitalises the first letter of every part of a name, e.g.
+// "jean-pierre o'neil" -> "Jean-Pierre O'Neil".
+// Only the FIRST letter of each part changes; the rest is left as typed,
+// so names like "McDonald" are not turned into "Mcdonald".
+function capitalizeName(name) {
+  return (name || "").replace(
+    /(^|[\s'’-])(\p{L})/gu,
+    (match, separator, letter) => separator + letter.toLocaleUpperCase()
+  );
+}
+
+// Joins first, middle (if any) and last name, each capitalised.
+function formatFullName(employee) {
+  return [employee.first_name, employee.middle_name, employee.last_name]
+    .filter(Boolean)
+    .map(capitalizeName)
+    .join(" ");
+}
+
 const emptyForm = {
   first_name: "",
   middle_name: "",
@@ -223,13 +242,7 @@ function App() {
   }
 
   async function handleDelete(employee) {
-    const employeeName = [
-      employee.first_name,
-      employee.middle_name,
-      employee.last_name,
-    ]
-      .filter(Boolean)
-      .join(" ");
+    const employeeName = formatFullName(employee);
 
     const confirmed = window.confirm(
       `Are you sure you want to delete ${employeeName}?`
@@ -574,13 +587,7 @@ function App() {
 
               <tbody>
                 {filteredEmployees.map((employee) => {
-                  const fullName = [
-                    employee.first_name,
-                    employee.middle_name,
-                    employee.last_name,
-                  ]
-                    .filter(Boolean)
-                    .join(" ");
+                  const fullName = formatFullName(employee);
 
                   return (
                     <tr key={employee.id}>
