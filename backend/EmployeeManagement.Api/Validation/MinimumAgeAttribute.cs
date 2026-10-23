@@ -24,15 +24,21 @@ public class MinimumAgeAttribute : ValidationAttribute
 
         var today = DateOnly.FromDateTime(DateTime.Today);
 
+        // Link the error to the property it belongs to (e.g. "DateOfBirth"),
+        // the same way the built-in attributes do.
+        var memberNames = validationContext.MemberName is null
+            ? null
+            : new[] { validationContext.MemberName };
+
         if (dateOfBirth > today)
         {
-            return new ValidationResult("Date of birth cannot be in the future.");
+            return new ValidationResult("Date of birth cannot be in the future.", memberNames);
         }
 
         // Their 18th birthday must be today or earlier.
         if (dateOfBirth.AddYears(Years) > today)
         {
-            return new ValidationResult(ErrorMessage);
+            return new ValidationResult(ErrorMessage, memberNames);
         }
 
         return ValidationResult.Success;
