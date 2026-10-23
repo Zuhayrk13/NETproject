@@ -46,7 +46,10 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        // If SQL Server is briefly unreachable (e.g. still starting in Docker), retry instead of crashing.
+        sqlOptions => sqlOptions.EnableRetryOnFailure()));
 
 builder.Services.AddOpenApi();
 
@@ -54,12 +57,20 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+// Apply any pending EF Core migrations at startup.
+// Inside Docker there is no "dotnet ef database update", so the app creates/updates
+// its own database. If everything is already applied, this does nothing.
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
