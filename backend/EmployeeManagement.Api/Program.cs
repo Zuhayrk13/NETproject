@@ -45,6 +45,10 @@ builder.Services.AddControllers()
         };
     });
 
+// Generate links in lowercase (/api/employees/2, not /api/Employees/2),
+// matching the URLs in the spec and the frontend.
+builder.Services.AddRouting(options => options.LowercaseUrls = true);
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection"),
